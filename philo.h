@@ -26,8 +26,10 @@ typedef struct s_philos
 	int				times_eaten;
 	time_t			last_meal_time;
 	t_data			*data;
-	pthread_mutex_t	left_fork;
-	pthread_mutex_t	right_fork;
-}	t_philos;
+	pthread_mutex_t	*left_fork;
+	pthread_mutex_t	*right_fork;
+} t_philos;
+
+
 
 #endif
