@@ -7,6 +7,7 @@
 # include <sys/time.h>
 # include <unistd.h>
 # include <limits.h>
+# include <string.h>
 
 
 typedef struct s_data
@@ -35,6 +36,7 @@ typedef struct s_philos
 	pthread_mutex_t	*left_fork;
 	pthread_mutex_t	*right_fork;
 	pthread_mutex_t mtx_meal;
+	int has_eaten_enough;
 } t_philos;
 
 

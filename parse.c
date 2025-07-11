@@ -1,5 +1,20 @@
 #include "philo.h"
 
+int ft_strlen(char *str)
+{
+	int i;
+
+	i = 0;
+	while (str[i])
+		i++;
+	return (i);
+}
+
+int	print_error(char *msg)
+{
+	write(2, msg, ft_strlen(msg));
+	return (1);          // return 1 to indicate failure
+}
 
 time_t	get_time(void);
 
@@ -22,30 +37,26 @@ void	ft_usleep(time_t milliseconds, t_philos *philo)
 	
 }
 
-int	ft_atoi(char *str)
-{
-	int	i = 0;
-	int	result = 0;
-	int	sign = 1;
 
-	while (str[i] == ' ' || (str[i] >= 9 && str[i] <= 13))
-		i++;
-	if (str[i] == '-' || str[i] == '+')
-	{
-		if (str[i] == '-')
-			sign = -1;
-		i++;
-	}
-	while (str[i] >= '0' && str[i] <= '9')
-	{
-		result = result * 10 + (str[i++] - '0');
-		if (result > INT_MAX)
-		{
-			printf("overflow");
-			exit(1);
-		}
-	}
-	return (sign * result);
+unsigned int    ft_atoi(char *str)
+{
+    unsigned long   res; //nrje3 lhad unisgned nfhmha
+    int i;
+
+    i = 0;
+    res = 0;
+    if (str[i] == '+')
+        i++;
+    while (str[i] >= '0' && str[i] <= '9')
+    {
+        res = res * 10 + (str[i] - '0');
+        if (res >= INT_MAX)///////////// rje3 lhadi darori !!!!!!!
+            return (INT_MAX);
+        i++;
+    }
+    if (str[i])
+        return (INT_MAX);
+    return (res);
 }
 
 time_t	get_time(void)
@@ -100,12 +111,14 @@ void *routine(void *arg)
 		pthread_mutex_unlock(&philo->mtx_meal);
 		log_action(philo, "is eating");
 		philo->meal_count++;
-		if (philo->meal_count == philo->data->meal_goal)
+		if (!philo->has_eaten_enough && philo->meal_count == philo->data->meal_goal)
 		{
 			pthread_mutex_lock(&philo->data->full_mtx);
 			philo->data->full_philo_count++;
 			pthread_mutex_unlock(&philo->data->full_mtx);
-		}
+			philo->has_eaten_enough = 1;
+		}		
+		//printf("Philo %d | meals: %d | has_eaten_enough: %d\n", philo->id, philo->meal_count, philo->has_eaten_enough);
 		ft_usleep(philo->data->time_to_eat, philo);
 		pthread_mutex_unlock(philo->left_fork);
 		pthread_mutex_unlock(philo->right_fork);
@@ -115,6 +128,8 @@ void *routine(void *arg)
 		if (philo->data->num_philosophers % 2 != 0)
 			usleep(500);
 	}
+
+
 	return (NULL); //NULL f void * mean "no pointer" / empty address. //n9dro nrj3o ayy haja bghina ghir 3la hsab 7na hna mabghina walo drna NULL
 }
 
@@ -148,15 +163,21 @@ void *mounitor(t_philos *philos)
 		if (philos->data->meal_goal > 0)
 		{
 			pthread_mutex_lock(&philos->data->full_mtx);
-			if (philos->data->full_philo_count >= philos->data->meal_goal)
+			if (philos->data->full_philo_count >= philos->data->num_philosophers)
 			{
+				//printf("===> FULL_COUNT = %d\n", philos->data->full_philo_count);
 				pthread_mutex_unlock(&philos->data->full_mtx);
+				pthread_mutex_lock(&philos->data->stop_mtx);
+				philos->data->stop_flag = 0;
+				pthread_mutex_unlock(&philos->data->stop_mtx);
 				return (NULL);
 			}
 			pthread_mutex_unlock(&philos->data->full_mtx);
 		}
 		usleep(500);
 	}
+
+
 }
 
 int main(int ac, char **av)
@@ -164,7 +185,7 @@ int main(int ac, char **av)
 	t_philos philos[200];
 	t_data data;
 	int i;
-
+	
 	if (ac != 5 && ac != 6)
 		return (1);
 	data.num_philosophers = ft_atoi(av[1]);
@@ -172,9 +193,17 @@ int main(int ac, char **av)
 	data.time_to_eat = ft_atoi(av[3]);
 	data.time_to_sleep = ft_atoi(av[4]);
 
+	if (data.num_philosophers <= 0 || data.num_philosophers > 200)
+		return (print_error("Error: invalid number of philosophers\n"));
+	if (data.time_to_die == INT_MAX || data.time_to_eat == INT_MAX || data.time_to_sleep == INT_MAX)
+		return (print_error("Error: invalid number of philosophers\n"));
+
+
 	data.meal_goal = -1;
 	if (ac == 6)
 		data.meal_goal = ft_atoi(av[5]);
+
+	
 	pthread_mutex_init(&data.stop_mtx, NULL);
 	pthread_mutex_init(&data.full_mtx, NULL);
 	data.full_philo_count = 0;
@@ -190,6 +219,7 @@ int main(int ac, char **av)
 		philos[i].right_fork = &data.forks [(i + 1) % data.num_philosophers];
 		philos[i].last_meal_time = get_time();
 		philos[i].meal_count = 0;
+		philos[i].has_eaten_enough = 0;
 		pthread_mutex_init(&philos[i].mtx_meal, NULL);
 		i++;
 	}
