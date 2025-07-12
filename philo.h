@@ -19,11 +19,11 @@ typedef struct s_data
 	int				meal_goal;
 	int				stop_flag;
 	time_t			start_time;
-	pthread_mutex_t	forks[200];
+	pthread_mutex_t	forks[200]; //mutex array li fih 200 mutex max (1 fork per philosopher)
 	pthread_t		threads[200];
 	pthread_mutex_t stop_mtx;
 	pthread_mutex_t full_mtx;
-	int full_philo_count;
+	int full_philo_count; //compteur dyal philo liklaw meal goal
 }	t_data;
 
 typedef struct s_philos

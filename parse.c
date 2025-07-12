@@ -45,8 +45,6 @@ unsigned int    ft_atoi(char *str)
 
     i = 0;
     res = 0;
-    if (str[i] == '+')
-        i++;
     while (str[i] >= '0' && str[i] <= '9')
     {
         res = res * 10 + (str[i] - '0');
@@ -54,17 +52,23 @@ unsigned int    ft_atoi(char *str)
             return (INT_MAX);
         i++;
     }
-    if (str[i])
-        return (INT_MAX);
+    if (str[i]) //ila kant ba9a chi haja fstring mn ghir ar9am  -->overflow wla invalid input
+        return (INT_MAX); 
     return (res);
 }
 
 time_t	get_time(void)
 {
-	struct timeval	tv;
 
-	gettimeofday(&tv, NULL);
-	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+	//(1 second = 1,000,000 microseconds)
+	struct timeval	tv; //hiya struct li kat3mrha b  tv sec otv usec
+
+	//tv mean cointener bach n7to fih lwa9t actual
+
+	gettimeofday(&tv, NULL); //NULL meaning “Mahtajch timezone, tkhdem ghir b waqt local li 3nd OS”
+	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000)); //seconds → milliseconds || microseconds → milliseconds = total time in milliseconds
+
+	//tv.tv_usec number of seconds men 1 Janvier 1970 (howa time fach bda unix)
 }
 
 void log_action(t_philos *philo, char *action)
@@ -160,12 +164,11 @@ void *mounitor(t_philos *philos)
 			
 			i++;
 		}
-		if (philos->data->meal_goal > 0)
+		if (philos->data->meal_goal > 0) //ila meal goal khawya makaydkhlch lhna 7itach ma3arfinch 3addad dmeals 3lach an7bso
 		{
 			pthread_mutex_lock(&philos->data->full_mtx);
 			if (philos->data->full_philo_count >= philos->data->num_philosophers)
 			{
-				//printf("===> FULL_COUNT = %d\n", philos->data->full_philo_count);
 				pthread_mutex_unlock(&philos->data->full_mtx);
 				pthread_mutex_lock(&philos->data->stop_mtx);
 				philos->data->stop_flag = 0;
@@ -199,24 +202,26 @@ int main(int ac, char **av)
 		return (print_error("Error: invalid number of philosophers\n"));
 
 
-	data.meal_goal = -1;
+	data.meal_goal = -1; //makaynach doc simulation ghadi tsali ghir ila chi wahed mat
 	if (ac == 6)
 		data.meal_goal = ft_atoi(av[5]);
 
 	
 	pthread_mutex_init(&data.stop_mtx, NULL);
 	pthread_mutex_init(&data.full_mtx, NULL);
-	data.full_philo_count = 0;
+	data.full_philo_count = 0; 
+
 	i = 0;
 	while (i < data.num_philosophers)
-		pthread_mutex_init(&data.forks[i++], NULL);
+		pthread_mutex_init(&data.forks[i++], NULL); //initialisation 3la hsab kol philisopher
+
 	i = 0;
 	while (i < data.num_philosophers)
 	{
 		philos[i].id = i + 1;
-		philos[i].data = &data;
+		philos[i].data = &data; //bach kanchofo config dkola philo mn struct t_data
 		philos[i].left_fork = &data.forks[i];
-		philos[i].right_fork = &data.forks [(i + 1) % data.num_philosophers];
+		philos[i].right_fork = &data.forks [(i + 1) % data.num_philosophers];  //matalan 5 philo dak lkher howa 5 bdina hsab b 1 --> 5 + 1 % 5 = 1 y3ni fork right dyalo hiya 1 
 		philos[i].last_meal_time = get_time();
 		philos[i].meal_count = 0;
 		philos[i].has_eaten_enough = 0;
@@ -227,11 +232,17 @@ int main(int ac, char **av)
 	data.start_time = get_time();
 	data.stop_flag = 1;
 
+	i = 1;
+	while (i < data.num_philosophers)
+	{
+		pthread_create(&data.threads[i] , NULL, routine, &philos[i]);
+		i += 2;
+	}
 	i = 0;
 	while (i < data.num_philosophers)
 	{
 		pthread_create(&data.threads[i] , NULL, routine, &philos[i]);
-		i++;
+		i += 2;
 	}
 
 	mounitor(philos);
