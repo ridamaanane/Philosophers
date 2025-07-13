@@ -38,8 +38,25 @@ typedef struct s_philos
 	pthread_mutex_t mtx_meal;
 } t_philos;
 
+//routine
+void *routine(void *arg);
 
+//mounitor
+void	mounitor(t_philos *philos);
+
+//parce
+void log_action(t_philos *philo, char *action);
+void init_philosophers(t_data *data, t_philos *philos);
+void init_mutexes(t_data *data);
+void start_simulation(t_data *data, t_philos *philos);
+
+//utils
 time_t	get_time(void);
+void	ft_usleep(time_t milliseconds, t_philos *philo);
+void    cleaning_mutexes(t_philos *philos, t_data *data);
 
+//parse
+unsigned int    ft_atoi(char *str);
+int	print_error(char *msg);
 
 #endif
