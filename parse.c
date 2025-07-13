@@ -16,14 +16,12 @@ int	print_error(char *msg)
 	return (1);          // return 1 to indicate failure
 }
 
-time_t	get_time(void);
-
-void	ft_usleep(time_t milliseconds, t_philos *philo)
+void	ft_usleep(time_t milliseconds, t_philos *philo) //target howa hadi kachecke kola mra yakma mat chi wahed bach thbs usleep katb9a khdama dima!! dakchi 3lach madrnahach
 {
 	time_t	start;
 
 	start = get_time();
-	while ((get_time() - start) < milliseconds)
+ 	while ((get_time() - start) < milliseconds)
 	{
 		pthread_mutex_lock(&philo->data->stop_mtx);
 		if (!philo->data->stop_flag)
@@ -80,56 +78,54 @@ void log_action(t_philos *philo, char *action)
 		return ;
 	}
 	printf("%ld %d %s\n", get_time() - philo->data->start_time, philo->id, action);
-	pthread_mutex_unlock(&philo->data->stop_mtx);
+	pthread_mutex_unlock(&philo->data->stop_mtx); //tb9a habta 7it kaynin des cas fihom mmchkil 
 }
 
-void *routine(void *arg)
+void *routine(void *arg) // routine kaybdel
 {
-	t_philos *philo = (t_philos *)arg;
+	t_philos *philo = (t_philos *)arg; //3la hsab pthread create kat9bl void* argument dakchi 3lach drna haka 3ad castlina
 	
 	while (1)
 	{
 		pthread_mutex_lock(&philo->data->stop_mtx);
-		if (!philo->data->stop_flag)
+		if (!philo->data->stop_flag)// mean routine ysali
 		{
 			pthread_mutex_unlock(&philo->data->stop_mtx);
 			return (NULL);
 		}
 		pthread_mutex_unlock(&philo->data->stop_mtx);
-		if (philo->id % 2 == 0)
+		if (philo->id % 2 == 0) //even ( Bash ntfadow DEADLOCK!)
 		{
 			pthread_mutex_lock(philo->left_fork);
 			log_action(philo, "has taken a fork");
 			pthread_mutex_lock(philo->right_fork);
 			log_action(philo, "has taken a fork");
 		}
-		else
+		else //odd
 		{
 			pthread_mutex_lock(philo->right_fork);
 			log_action(philo, "has taken a fork");
 			pthread_mutex_lock(philo->left_fork);
 			log_action(philo, "has taken a fork");
 		}
-		pthread_mutex_lock(&philo->mtx_meal);
+		pthread_mutex_lock(&philo->mtx_meal); //ma ykounch conflict ma3 monitor() li kay9raha
 		philo->last_meal_time = get_time();
 		pthread_mutex_unlock(&philo->mtx_meal);
 		log_action(philo, "is eating");
 		philo->meal_count++;
-		if (!philo->has_eaten_enough && philo->meal_count == philo->data->meal_goal)
+		if (philo->meal_count == philo->data->meal_goal)
 		{
 			pthread_mutex_lock(&philo->data->full_mtx);
 			philo->data->full_philo_count++;
 			pthread_mutex_unlock(&philo->data->full_mtx);
-			philo->has_eaten_enough = 1;
 		}		
-		//printf("Philo %d | meals: %d | has_eaten_enough: %d\n", philo->id, philo->meal_count, philo->has_eaten_enough);
 		ft_usleep(philo->data->time_to_eat, philo);
 		pthread_mutex_unlock(philo->left_fork);
 		pthread_mutex_unlock(philo->right_fork);
 		log_action(philo, "is sleeping");
 		ft_usleep(philo->data->time_to_sleep, philo);
 		log_action(philo, "is thinking");
-		if (philo->data->num_philosophers % 2 != 0)
+		if (philo->data->num_philosophers % 2 != 0) //drna odd 7it homa fach kayen cofnlit ama lakan even kaykon balance
 			usleep(500);
 	}
 
@@ -137,43 +133,47 @@ void *routine(void *arg)
 	return (NULL); //NULL f void * mean "no pointer" / empty address. //n9dro nrj3o ayy haja bghina ghir 3la hsab 7na hna mabghina walo drna NULL
 }
 
-void *mounitor(t_philos *philos)
+//➡️ Function monitor katmonitori kol philosophers bach:
+
+// wahed mat?
+
+// kolshi klaw lgoal?
+
+void mounitor(t_philos *philos) //mounitor kay9ra
 {
 	int i = 0;
 	int num_of_philos;
 	
-	num_of_philos = philos->data->num_philosophers;
+	num_of_philos = philos->data->num_philosophers; // Variable bash n7fdo fih data.num_philosophers (bach manmchiwloch ldata kol waqt)
 
 	while (1)
 	{
 		i = 0;
 		while (i < num_of_philos)
 		{
-			pthread_mutex_lock(&philos[i].mtx_meal);
-			if (get_time() - philos[i].last_meal_time > philos->data->time_to_die)
+			pthread_mutex_lock(&philos[i].mtx_meal); //Sddina access 3la last_meal_time 7it bghina n9rawha safely
+			if (get_time() - philos[i].last_meal_time > philos->data->time_to_die) //check ila philo mat bjou3
 			{
+				pthread_mutex_unlock(&philos[i].mtx_meal);
 				pthread_mutex_lock(&philos[i].data->stop_mtx);
 				philos->data->stop_flag = 0;
 				pthread_mutex_unlock(&philos[i].data->stop_mtx);
-				pthread_mutex_unlock(&philos[i].mtx_meal);
 				printf("%ld %d died\n", get_time() - philos->data->start_time, philos[i].id);
-				return (NULL);
+				return ;
 			}
-			pthread_mutex_unlock(&philos[i].mtx_meal);
-			
-			
+			pthread_mutex_unlock(&philos[i].mtx_meal); //ila madkhelch l if y3awd y7el
 			i++;
 		}
 		if (philos->data->meal_goal > 0) //ila meal goal khawya makaydkhlch lhna 7itach ma3arfinch 3addad dmeals 3lach an7bso
 		{
-			pthread_mutex_lock(&philos->data->full_mtx);
+			pthread_mutex_lock(&philos->data->full_mtx); //Katsdd lmutex li kay7mi full_philo_count ---> 7it hadi shared variable: threads bzaf kayzido fih f nafs lwa9t
 			if (philos->data->full_philo_count >= philos->data->num_philosophers)
 			{
 				pthread_mutex_unlock(&philos->data->full_mtx);
 				pthread_mutex_lock(&philos->data->stop_mtx);
 				philos->data->stop_flag = 0;
 				pthread_mutex_unlock(&philos->data->stop_mtx);
-				return (NULL);
+				return ;
 			}
 			pthread_mutex_unlock(&philos->data->full_mtx);
 		}
@@ -207,9 +207,9 @@ int main(int ac, char **av)
 		data.meal_goal = ft_atoi(av[5]);
 
 	
-	pthread_mutex_init(&data.stop_mtx, NULL);
-	pthread_mutex_init(&data.full_mtx, NULL);
-	data.full_philo_count = 0; 
+	pthread_mutex_init(&data.stop_mtx, NULL); // Katinitializi mutex li kay7mi stop_flag
+	pthread_mutex_init(&data.full_mtx, NULL); //Katinitializi mutex li kay7mi full_philo_count
+	data.full_philo_count = 0;  //madrnach mutex init 7it howa aslan int fstruct may7tajch
 
 	i = 0;
 	while (i < data.num_philosophers)
@@ -223,25 +223,25 @@ int main(int ac, char **av)
 		philos[i].left_fork = &data.forks[i];
 		philos[i].right_fork = &data.forks [(i + 1) % data.num_philosophers];  //matalan 5 philo dak lkher howa 5 bdina hsab b 1 --> 5 + 1 % 5 = 1 y3ni fork right dyalo hiya 1 
 		philos[i].last_meal_time = get_time();
-		philos[i].meal_count = 0;
-		philos[i].has_eaten_enough = 0;
-		pthread_mutex_init(&philos[i].mtx_meal, NULL);
+		philos[i].meal_count = 0; //7it hna mazal makla walo
+		pthread_mutex_init(&philos[i].mtx_meal, NULL); //NUll mean  katsgoul lmutex ytsayb b default config (normal mutex, standard behavior)
 		i++;
 	}
 
 	data.start_time = get_time();
-	data.stop_flag = 1;
+	data.stop_flag = 1; //7it kancheckiw mn b3d if(stop flag) ila l9a wahed kaykmel 0 kayhbs
 
-	i = 1;
+	i = 1; //even (katzad 3lih 1 so kaywli 2)
 	while (i < data.num_philosophers)
 	{
 		pthread_create(&data.threads[i] , NULL, routine, &philos[i]);
 		i += 2;
 	}
-	i = 0;
+	usleep(500);  //0.5 millisecond
+	i = 0; //odd (katzad 3lih 1 so kaywli 1))
 	while (i < data.num_philosophers)
 	{
-		pthread_create(&data.threads[i] , NULL, routine, &philos[i]);
+		pthread_create(&data.threads[i] , NULL, routine, &philos[i]); // &data.thread[i] (id) ,  &philos[i] bach t3rf routine ina philo khdamin 3lih (info 3lih fstruct (id, forks, last..))
 		i += 2;
 	}
 

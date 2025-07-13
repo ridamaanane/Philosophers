@@ -20,9 +20,9 @@ typedef struct s_data
 	int				stop_flag;
 	time_t			start_time;
 	pthread_mutex_t	forks[200]; //mutex array li fih 200 mutex max (1 fork per philosopher)
-	pthread_t		threads[200];
+	pthread_t		threads[200]; //id dyal thread
 	pthread_mutex_t stop_mtx;
-	pthread_mutex_t full_mtx;
+	pthread_mutex_t full_mtx; //mutex li kay7mi full_philo_count
 	int full_philo_count; //compteur dyal philo liklaw meal goal
 }	t_data;
 
@@ -36,9 +36,10 @@ typedef struct s_philos
 	pthread_mutex_t	*left_fork;
 	pthread_mutex_t	*right_fork;
 	pthread_mutex_t mtx_meal;
-	int has_eaten_enough;
 } t_philos;
 
+
+time_t	get_time(void);
 
 
 #endif
