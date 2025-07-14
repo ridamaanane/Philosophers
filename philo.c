@@ -6,7 +6,7 @@
 /*   By: rmaanane <rmaanane@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/14 12:25:54 by rmaanane          #+#    #+#             */
-/*   Updated: 2025/07/14 13:01:28 by rmaanane         ###   ########.fr       */
+/*   Updated: 2025/07/14 18:07:45 by rmaanane         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,8 +20,10 @@ void	log_action(t_philos *philo, char *action)
 		pthread_mutex_unlock(&philo->data->stop_mtx);
 		return ;
 	}
+	pthread_mutex_lock(&philo->data->print_mtx);
 	printf("%ld %d %s\n", get_time() - philo->data->start_time, philo->id,
 		action);
+	pthread_mutex_ulock(&philo->data->print_mtx);
 	pthread_mutex_unlock(&philo->data->stop_mtx);
 }
 
@@ -48,6 +50,7 @@ void	init_mutexes(t_data *data)
 	int	i;
 
 	i = 0;
+	pthread_mutex_init(&data->print_mtx, NULL);
 	pthread_mutex_init(&data->stop_mtx, NULL);
 	pthread_mutex_init(&data->full_mtx, NULL);
 	data->full_philo_count = 0;

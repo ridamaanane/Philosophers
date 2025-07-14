@@ -6,7 +6,7 @@
 /*   By: rmaanane <rmaanane@student.1337.ma>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/07/14 12:26:02 by rmaanane          #+#    #+#             */
-/*   Updated: 2025/07/14 16:04:35 by rmaanane         ###   ########.fr       */
+/*   Updated: 2025/07/14 17:38:44 by rmaanane         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,6 +35,7 @@ typedef struct s_data
 	pthread_mutex_t	stop_mtx;
 	pthread_mutex_t	full_mtx;
 	int				full_philo_count;
+	pthread_mutex_t	print_mtx;
 }					t_data;
 
 typedef struct s_philos
