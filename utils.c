@@ -1,23 +1,29 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   utils.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rmaanane <rmaanane@student.1337.ma>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/07/14 12:26:14 by rmaanane          #+#    #+#             */
+/*   Updated: 2025/07/14 13:16:09 by rmaanane         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
 time_t	get_time(void)
 {
+	struct timeval	tv;
 
-	//(1 second = 1,000,000 microseconds)
-	struct timeval	tv; //hiya struct li kat3mrha b  tv sec otv usec
-
-	//tv mean cointener bach n7to fih lwa9t actual
-
-	gettimeofday(&tv, NULL); //NULL meaning “Mahtajch timezone, tkhdem ghir b waqt local li 3nd OS”
-	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000)); //seconds → milliseconds || microseconds → milliseconds = total time in milliseconds
-
-	//tv.tv_usec number of seconds men 1 Janvier 1970 (howa time fach bda unix)
+	gettimeofday(&tv, NULL);
+	return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
 }
 
-void	ft_usleep(time_t milliseconds, t_philos *philo)
+void	smart_usleep(time_t milliseconds, t_philos *philo)
 {
 	time_t	start;
-	
+
 	start = get_time();
 	while ((get_time() - start) < milliseconds)
 	{
@@ -30,20 +36,29 @@ void	ft_usleep(time_t milliseconds, t_philos *philo)
 		pthread_mutex_unlock(&philo->data->stop_mtx);
 		usleep(500);
 	}
-	
 }
 
-void    cleaning_mutexes(t_philos *philos, t_data *data)
+int	check_error(t_data data)
 {
-		int     i;
+	if (data.num_philosophers <= 0 || data.num_philosophers > 200)
+		return (print_error("Error: invalid number of philosophers\n"));
+	if (data.time_to_die == INT_MAX || data.time_to_eat == INT_MAX
+		|| data.time_to_sleep == INT_MAX || data.meal_goal == INT_MAX)
+		return (print_error("Error: invalid number of philosophers\n"));
+	return (0);
+}
 
-		i = 0;
-		while (i < data->num_philosophers)
-		{
-				pthread_mutex_destroy(&data->forks[i]);
-				pthread_mutex_destroy(&philos[i].mtx_meal);
-				i++;
-		}
-		pthread_mutex_destroy(&data->stop_mtx);
-		pthread_mutex_destroy(&data->full_mtx);
+void	cleaning_mutexes(t_philos *philos, t_data *data)
+{
+	int	i;
+
+	i = 0;
+	while (i < data->num_philosophers)
+	{
+		pthread_mutex_destroy(&data->forks[i]);
+		pthread_mutex_destroy(&philos[i].mtx_meal);
+		i++;
+	}
+	pthread_mutex_destroy(&data->stop_mtx);
+	pthread_mutex_destroy(&data->full_mtx);
 }

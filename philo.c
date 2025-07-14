@@ -1,6 +1,18 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   philo.c                                            :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: rmaanane <rmaanane@student.1337.ma>        +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/07/14 12:25:54 by rmaanane          #+#    #+#             */
+/*   Updated: 2025/07/14 13:01:28 by rmaanane         ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "philo.h"
 
-void log_action(t_philos *philo, char *action)
+void	log_action(t_philos *philo, char *action)
 {
 	pthread_mutex_lock(&philo->data->stop_mtx);
 	if (!philo->data->stop_flag)
@@ -8,14 +20,16 @@ void log_action(t_philos *philo, char *action)
 		pthread_mutex_unlock(&philo->data->stop_mtx);
 		return ;
 	}
-	printf("%ld %d %s\n", get_time() - philo->data->start_time, philo->id, action);
-	pthread_mutex_unlock(&philo->data->stop_mtx); //tb9a habta 7it kaynin des cas fihom mmchkil 
+	printf("%ld %d %s\n", get_time() - philo->data->start_time, philo->id,
+		action);
+	pthread_mutex_unlock(&philo->data->stop_mtx);
 }
 
-void init_philosophers(t_data *data, t_philos *philos)
+void	init_philosophers(t_data *data, t_philos *philos)
 {
-	int i = 0;
+	int	i;
 
+	i = 0;
 	while (i < data->num_philosophers)
 	{
 		philos[i].id = i + 1;
@@ -29,10 +43,11 @@ void init_philosophers(t_data *data, t_philos *philos)
 	}
 }
 
-void init_mutexes(t_data *data)
+void	init_mutexes(t_data *data)
 {
-	int i = 0;
+	int	i;
 
+	i = 0;
 	pthread_mutex_init(&data->stop_mtx, NULL);
 	pthread_mutex_init(&data->full_mtx, NULL);
 	data->full_philo_count = 0;
@@ -40,11 +55,11 @@ void init_mutexes(t_data *data)
 		pthread_mutex_init(&data->forks[i++], NULL);
 }
 
-
-void start_simulation(t_data *data, t_philos *philos)
+void	start_simulation(t_data *data, t_philos *philos)
 {
-	int i = 1;
+	int	i;
 
+	i = 1;
 	data->start_time = get_time();
 	data->stop_flag = 1;
 	while (i < data->num_philosophers)
@@ -62,11 +77,11 @@ void start_simulation(t_data *data, t_philos *philos)
 	mounitor(philos);
 }
 
-int main(int ac, char **av)
+int	main(int ac, char **av)
 {
-	t_philos philos[200];
-	t_data data;
-	int i;
+	t_philos	philos[200];
+	t_data		data;
+	int			i;
 
 	if (ac != 5 && ac != 6)
 		return (1);
@@ -77,10 +92,8 @@ int main(int ac, char **av)
 	data.meal_goal = -1;
 	if (ac == 6)
 		data.meal_goal = ft_atoi(av[5]);
-	if (data.num_philosophers <= 0 || data.num_philosophers > 200)
-		return (print_error("Error: invalid number of philosophers\n"));
-	if (data.time_to_die == INT_MAX || data.time_to_eat == INT_MAX || data.time_to_sleep == INT_MAX)
-		return (print_error("Error: invalid number of philosophers\n"));
+	if (check_error(data))
+		return (1);
 	init_mutexes(&data);
 	init_philosophers(&data, philos);
 	data.start_time = get_time();
